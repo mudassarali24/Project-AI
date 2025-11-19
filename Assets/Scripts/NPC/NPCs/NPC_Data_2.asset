@@ -10,10 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d27f7d494b1df440b7a6b22b623580e, type: 3}
-  m_Name: NPC_Data
+  m_Name: NPC_Data_2
   m_EditorClassIdentifier: 
-  type: 0
+  type: 1
   personality: 
   gender: 0
   aiVoice: 2
-  path: 0

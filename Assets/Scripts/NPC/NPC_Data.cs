@@ -15,10 +15,6 @@ public enum AIVoice
 {
     alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, verse
 }
-public enum WalkpointsPath
-{
-    None, Path1, Path2, Path3, Path4
-}
 
 [CreateAssetMenu(fileName = "NPC_Data", menuName = "ScriptableObjects/NPC_Data")]
 public class NPC_Data : ScriptableObject
@@ -28,5 +24,4 @@ public class NPC_Data : ScriptableObject
     public string personality;
     public Gender gender;
     public AIVoice aiVoice;
-    public WalkpointsPath path;
 }
