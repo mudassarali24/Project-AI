@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -18,11 +19,15 @@ public class NPC_AI : MonoBehaviour
     public float playerDistanceThreshold = 2f;
     private Animator animator;
     private NavMeshAgent agent;
+    private AudioSource audioSource;
     public float agentWaitAtDest = 4.0f;
     private float agentWait = 0.0f;
+    public float talkAnimateThreshold = 2.0f;
+    private float talkAnimationTime = 0.0f;
     private Vector3 currentWP;
     private bool playerEntered = false;
     private bool canMove = true;
+    private string aiReply;
 
     private GameObject player;
 
@@ -35,6 +40,7 @@ public class NPC_AI : MonoBehaviour
     {
         animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
+        audioSource = GetComponent<AudioSource>();
         player = GameObject.FindGameObjectWithTag("Player");
         ExecuteNPC();
     }
@@ -44,7 +50,8 @@ public class NPC_AI : MonoBehaviour
         DetectPlayerInRange();
         DetectInteractionInput();
         NPCMovement();
-        LookToPlayerInIdle();
+        LookToPlayerInIdle(); 
+        AnimatePlayerInTalking();
     }
 
     private void ExecuteNPC()
@@ -53,6 +60,7 @@ public class NPC_AI : MonoBehaviour
         {
             case NPCState.Idle:
                 animator.SetBool("Idle", true);
+                animator.SetBool("Walking", false);
                 break;
             case NPCState.Talking:
                 animator.SetTrigger("Talking");
@@ -74,6 +82,18 @@ public class NPC_AI : MonoBehaviour
         transform.LookAt(targetPos);
     }
 
+    private void AnimatePlayerInTalking()
+    {
+        if (currentState != NPCState.Talking) return;
+        talkAnimationTime += Time.deltaTime;
+        if (talkAnimationTime >= talkAnimateThreshold)
+        {
+            animator.SetTrigger("Talking");
+            animator.SetInteger("Talking_Ges", Random.Range(0, 2));
+            talkAnimationTime = 0.0f;
+        }
+    }
+
     private void DetectPlayerInRange()
     {
         if (!playerEntered) return;
@@ -90,11 +110,60 @@ public class NPC_AI : MonoBehaviour
         {
             // Interaction should happen
             ChangeState(NPCState.Idle);
-            if (!agent.isStopped) canMove = false;
+            // Stop if moving
+            if (!agent.isStopped)
+            {
+                canMove = false;
+                agent.isStopped = true;
+                ChangeState(NPCState.Idle);
+            }
             if (dialogueSystem.interactPanelActive) dialogueSystem.ToggleInteractPanel(false);
             dialogueSystem.ToggleDialoguePanel(true);
-            StartCoroutine(TestDialogueSystem());
+            // StartCoroutine(TestDialogueSystem());
+
+            dialogueSystem.AnimateDots();
+            OpenAIManager.npcPersonality = npcData.personality;
+            OpenAIManager.npcVoice = npcData.aiVoice.ToString();
+            OpenAIManager.OnAIReplyReceived += DisplayAIReply;
+            OpenAIManager.OnSpeechReady += PlayNPCReply;
+            AudioRecorder.Instance.StartRecording();
         }
+    }
+
+    private void DisplayAIReply(string _aiReply)
+    {
+        aiReply = _aiReply;
+        // dialogueSystem.AnimateText(aiReply);
+    }
+
+    private void PlayNPCReply(AudioClip clip)
+    {
+        if (clip == null) return;
+        dialogueSystem.AnimateText(aiReply);
+        audioSource.clip = clip;
+        currentState = NPCState.Talking;
+        ExecuteNPC();
+        audioSource.Play();
+        StartCoroutine(WaitForClipEnd());
+    }
+    private IEnumerator WaitForClipEnd()
+    {
+        while (audioSource.isPlaying)
+            yield return null;
+
+        // Reset OpenAI
+
+        OpenAIManager.npcPersonality = "";
+        OpenAIManager.npcVoice = "";
+        OpenAIManager.OnAIReplyReceived -= DisplayAIReply;
+        OpenAIManager.OnSpeechReady -= PlayNPCReply;
+        currentState = NPCState.Idle;
+        ExecuteNPC();
+        yield return new WaitForSeconds(4.0f);
+        canMove = true;
+        dialogueSystem.ToggleDialoguePanel(false);
+        currentState = NPCState.Idle;
+        ExecuteNPC();
     }
 
     #region NPC_MOVEMENT
@@ -142,7 +211,7 @@ public class NPC_AI : MonoBehaviour
     {
         dialogueSystem.AnimateDots();
         yield return new WaitForSeconds(5.0f);
-        dialogueSystem.AnimateText("Hello, this is a dummy text for the dialogue system!");
+        dialogueSystem.AnimateText("Hello, this is a dummy text for the dialogue system! And this is going to be a bit large just to make sure that the text fits in the dialogue box! If it does, then hurray! You are successfull!");
     }
 
     public void AttachToPlayer()

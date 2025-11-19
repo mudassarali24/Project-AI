@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: NPC_Data_2
   m_EditorClassIdentifier: 
   type: 1
-  personality: 
+  personality: You are a villager NPC in a game. You are worried and looking for
+    your lost sheeps. Reply as a game character without breaking immersion in only
+    one or two lines.
   gender: 0
-  aiVoice: 2
+  aiVoice: 6

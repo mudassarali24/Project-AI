@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: NPC_Data_3
   m_EditorClassIdentifier: 
   type: 1
-  personality: 
+  personality: You are a villager NPC in a game. You are just happy because your
+    crops did well business this year. Reply as a game character without breaking
+    immersion in only one or two lines.
   gender: 0
-  aiVoice: 2
+  aiVoice: 9

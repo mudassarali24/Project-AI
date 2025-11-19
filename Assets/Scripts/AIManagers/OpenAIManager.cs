@@ -6,6 +6,7 @@ using UnityEngine.Networking;
 using Newtonsoft.Json.Linq;
 using System.Text;
 using System.IO;
+using Newtonsoft.Json;
 
 public class OpenAIManager : MonoBehaviour
 {
@@ -26,6 +27,13 @@ public class OpenAIManager : MonoBehaviour
     public string aiReply;
     public AudioSource audioSource;
 
+    public static string npcPersonality;
+    public static string npcVoice;
+
+    // Actions
+    public static Action<string> OnAudioTranscribed;
+    public static Action<string> OnAIReplyReceived;
+    public static Action<AudioClip> OnSpeechReady;
 
     public static OpenAIManager Instance;
 
@@ -65,6 +73,7 @@ public class OpenAIManager : MonoBehaviour
             var json = www.downloadHandler.text;
             WhisperResponse resp = JsonUtility.FromJson<WhisperResponse>(json);
             onTranscriptionReady?.Invoke(resp.text);
+            OnAudioTranscribed?.Invoke(resp.text);
             transcribedText = resp.text;
             yield return new WaitForSeconds(0.2f); // wait little bit
             StartCoroutine(GetAIResponse(transcribedText, (string response) =>
@@ -82,7 +91,7 @@ public class OpenAIManager : MonoBehaviour
     /// <param name="npcPersonality"></param>
     /// <param name="callback"></param>
     /// <returns>AI Reply</returns>
-    public IEnumerator GetAIResponse(string prompt, Action<string> callback, string npcPersonality = "")
+    public IEnumerator GetAIResponse(string prompt, Action<string> callback)
     {
         if (string.IsNullOrEmpty(npcPersonality))
         {
@@ -135,6 +144,7 @@ public class OpenAIManager : MonoBehaviour
 
         string _aiReply = parsed["choices"][0]["message"]["content"].ToString();
         callback?.Invoke(_aiReply);
+        OnAIReplyReceived?.Invoke(_aiReply);
         aiReply = _aiReply;
         yield return new WaitForSeconds(0.2f); // wait a little bit
         StartCoroutine(SpeakText(aiReply, PlayGeneratedAudioClip));
@@ -148,13 +158,25 @@ public class OpenAIManager : MonoBehaviour
     /// <returns>Audio clip with voice.</returns>
     public IEnumerator SpeakText(string text, Action<AudioClip> callback)
     {
-        // json body
-        var json = @"{
+        string _voice = string.IsNullOrEmpty(npcVoice) ? "alloy" : npcVoice;
+
+        // json body old format
+        /*var json = @"{
             ""model"": ""gpt-4o-mini-tts"",
             ""voice"": ""alloy"",
             ""input"": """ + text.Replace("\"", "\\\"") + @""",
             ""response_format"": ""pcm""
-        }";
+        }";*/
+
+        var bodyObj = new
+        {
+            model = "gpt-4o-mini-tts",
+            voice = _voice,
+            input = text,
+            response_format = "pcm"
+        };
+
+        var json = JsonConvert.SerializeObject(bodyObj);
 
         byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
 
@@ -182,6 +204,7 @@ public class OpenAIManager : MonoBehaviour
         {
             AudioClip clip = SavWav.CreateAudioClipFromPCM(audioData, "AI_Response");
             callback?.Invoke(clip);
+            OnSpeechReady?.Invoke(clip);
             Debug.Log("MP3 converted to Wav!");
         }
         catch (Exception ex)

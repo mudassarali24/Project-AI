@@ -17,6 +17,9 @@ public class DialogueSystem : MonoBehaviour
     public bool dialoguePanelActive { get; private set; } = false;
     bool gotActualText = false;
 
+    Coroutine animateTextCo;
+    Coroutine animateDotsTextCo;
+
     public void ToggleInteractPanel(bool val)
     {
         // if (val && !interactPanel.gameObject.activeInHierarchy) interactPanel.gameObject.SetActive(true);
@@ -41,20 +44,25 @@ public class DialogueSystem : MonoBehaviour
 
     public void AnimateDots()
     {
-        StartCoroutine(AnimateDotsCo());
+        if (animateDotsTextCo != null) StopCoroutine(animateDotsTextCo);
+        animateDotsTextCo = StartCoroutine(AnimateDotsCo());
     }
     public void AnimateText(string text)
     {
         gotActualText = true;
         dialogueText.text = "";
-        StartCoroutine(AnimateTextCo(text));
+        if (animateDotsTextCo != null) StopCoroutine(animateDotsTextCo);
+        if (animateTextCo != null) StopCoroutine(animateTextCo);
+        animateTextCo = StartCoroutine(AnimateTextCo(text));
     }
 
     private IEnumerator AnimateDotsCo()
     {
+        dialogueText.text = "";
+        if (animateTextCo != null) StopCoroutine(animateTextCo);
         while (!gotActualText)
         {
-            yield return StartCoroutine(AnimateTextCo("..."));
+            animateTextCo = StartCoroutine(AnimateTextCo("..."));
             yield return new WaitForSeconds(1.0f);
             if (gotActualText) yield break;
             dialogueText.text = "";
@@ -66,8 +74,25 @@ public class DialogueSystem : MonoBehaviour
         for (int i = 0; i < text.Length; i++)
         {
             dialogueText.text += text[i];
+            dialogueText.ForceMeshUpdate();
+            AutoScroll();
             yield return new WaitForSeconds(animateSpeed);
         }
         gotActualText = false;
+    }
+
+    private void AutoScroll()
+    {
+        float textHeight = dialogueText.preferredHeight;
+        float containerHeight = dialoguePanel.GetComponent<RectTransform>().rect.height;
+        RectTransform textRT = dialogueText.GetComponent<RectTransform>();
+
+        if (textHeight > containerHeight)
+        {
+            // Move the text upward
+            Vector2 pos = textRT.anchoredPosition;
+            pos.y = textHeight - containerHeight;
+            textRT.anchoredPosition = pos;
+        }
     }
 }

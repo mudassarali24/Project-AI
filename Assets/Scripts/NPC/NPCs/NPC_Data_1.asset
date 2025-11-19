@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: NPC_Data_1
   m_EditorClassIdentifier: 
   type: 0
-  personality: 
+  personality: You are a villager NPC in a game. You are waiting for your corps to
+    grow for the business. Reply as a game character without breaking immersion in
+    only one or two lines.
   gender: 0
   aiVoice: 2
-  path: 0

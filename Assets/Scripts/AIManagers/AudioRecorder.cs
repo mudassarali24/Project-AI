@@ -14,6 +14,13 @@ public class AudioRecorder : MonoBehaviour
     private static bool isRecording;
     private static float silenceTimer;
 
+    public static AudioRecorder Instance;
+
+    void Awake()
+    {
+        Instance = this;
+    }
+
     /// <summary>
     /// Initializes Audio Recorder
     /// </summary>
