@@ -12,8 +12,4 @@ This project uses OpenAI API for:
 3- If you want complete NPC then you can grab the NPC prefab and that should do it
 
 ## A Demo Video:
-<a href="https://www.youtube.com/watch?v=_XDun_pJvHU"
-target="_blank">
-<img src="Assets/Artwork/AI-Gig-Thumbnail.png" alt="Watch the Demo" width="240"
-height="180" border="10">
-</a>
+<p align="center"> <a href="https://www.youtube.com/watch?v=_XDun_pJvHU" target="_blank"> <img src="Assets/Artwork/AI-Gig-Thumbnail.png" alt="Watch the Demo" width="480" style="border-radius:10px;"> </a> </p>
